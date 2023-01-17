@@ -395,7 +395,7 @@ func (s *HTTPHandlers) ACLTokenGet(resp http.ResponseWriter, req *http.Request, 
 	}
 
 	if out.Token == nil {
-		return nil, acl.ErrNotFound
+		return nil, fmt.Errorf("token does not exist: %w", acl.ErrNotFound)
 	}
 
 	if args.Expanded {

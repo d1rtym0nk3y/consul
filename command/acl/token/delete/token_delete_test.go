@@ -5,11 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mitchellh/cli"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/hashicorp/consul/agent"
 	"github.com/hashicorp/consul/api"
 	"github.com/hashicorp/consul/testrpc"
-	"github.com/mitchellh/cli"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestTokenDeleteCommand_noTabs(t *testing.T) {
@@ -69,5 +70,5 @@ func TestTokenDeleteCommand(t *testing.T) {
 		token.AccessorID,
 		&api.QueryOptions{Token: "root"},
 	)
-	assert.EqualError(t, err, "Unexpected response code: 403 (ACL not found)")
+	assert.EqualError(t, err, "Unexpected response code: 403 (token does not exist: ACL not found)")
 }
