@@ -575,7 +575,7 @@ func TestTokenWriter_Delete(t *testing.T) {
 				if !ok {
 					return nil, fmt.Errorf("unexpected message: %T", msg)
 				}
-				deletedIDs = req.TokenIDs
+				deletedIDs = req.TokenAccessorIDs
 
 				return nil, nil
 			},
