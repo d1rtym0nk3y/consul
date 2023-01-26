@@ -3,6 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
+	"strings"
+
+	"github.com/hashicorp/go-cleanhttp"
 
 	"github.com/hashicorp/consul/api"
 
@@ -15,7 +19,13 @@ const (
 	StaticClientServiceName = "static-client"
 )
 
-func CreateAndRegisterStaticServerAndSidecar(node libcluster.Agent) (Service, Service, error) {
+type ServiceOpts struct {
+	Name string
+	ID   string
+	Meta map[string]string
+}
+
+func CreateAndRegisterStaticServerAndSidecar(node libcluster.Agent, serviceOpts *ServiceOpts) (Service, Service, error) {
 	// Do some trickery to ensure that partial completion is correctly torn
 	// down, but successful execution is not.
 	var deferClean utils.ResettableDefer
@@ -24,7 +34,8 @@ func CreateAndRegisterStaticServerAndSidecar(node libcluster.Agent) (Service, Se
 	// Register the static-server service and sidecar first to prevent race with sidecar
 	// trying to get xDS before it's ready
 	req := &api.AgentServiceRegistration{
-		Name: StaticServerServiceName,
+		Name: serviceOpts.Name,
+		ID:   serviceOpts.ID,
 		Port: 8080,
 		Connect: &api.AgentServiceConnect{
 			SidecarService: &api.AgentServiceRegistration{
@@ -37,6 +48,7 @@ func CreateAndRegisterStaticServerAndSidecar(node libcluster.Agent) (Service, Se
 			Interval: "10s",
 			Status:   api.HealthPassing,
 		},
+		Meta: serviceOpts.Meta,
 	}
 
 	if err := node.GetClient().Agent().ServiceRegister(req); err != nil {
@@ -120,4 +132,92 @@ func CreateAndRegisterStaticClientSidecar(
 	deferClean.Reset()
 
 	return clientConnectProxy, nil
+}
+
+func GetEnvoyConfigDump(port int, filter string) (string, error) {
+	client := cleanhttp.DefaultClient()
+	url := fmt.Sprintf("http://localhost:%d/config_dump?%s", port, filter)
+
+	res, err := client.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
+}
+
+func GetEnvoyClusters(port int) (string, error) {
+	client := cleanhttp.DefaultClient()
+	url := fmt.Sprintf("http://localhost:%d/clusters?format=json", port)
+
+	res, err := client.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
+}
+
+func ApplyServiceResolver(cluster *libcluster.Cluster) error {
+	client := cluster.Agents[0].GetClient()
+
+	// Register service resolver
+	serviceResolver := &api.ServiceResolverConfigEntry{
+		Kind:          api.ServiceResolver,
+		Name:          StaticServerServiceName,
+		DefaultSubset: "v2",
+		Subsets: map[string]api.ServiceResolverSubset{
+			"v1": {
+				Filter: "Service.Meta.version == v1",
+			},
+			"v2": {
+				Filter: "Service.Meta.version == v2",
+			},
+		},
+	}
+
+	ok, _, err := client.ConfigEntries().Set(serviceResolver, nil)
+	if err != nil || !ok {
+		return fmt.Errorf("error writing service-resolver %w", err)
+	}
+	return nil
+}
+
+// GetSidecarCertificate perform a GET to /certs endpoint and returns response body and any error
+func GetSidecarCertificate(port int) (string, error) {
+	client := cleanhttp.DefaultClient()
+	url := fmt.Sprintf("http://localhost:%d/certs", port)
+
+	res, err := client.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
+}
+
+// sanitizeResult takes the value returned from config_dump json and cleans it up to remove special characters
+// e.g public_listener:0.0.0.0:21001 envoy.filters.network.rbac,envoy.filters.network.tcp_proxy
+// returns [envoy.filters.network.rbac envoy.filters.network.tcp_proxy]
+func SanitizeResult(s string) []string {
+	result := strings.Split(strings.ReplaceAll(s, `,`, " "), " ")
+	return append(result[:0], result[1:]...)
 }

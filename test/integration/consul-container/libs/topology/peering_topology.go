@@ -57,10 +57,16 @@ func BasicPeeringTwoClustersSetup(
 
 		// Create a service and proxy instance
 		var err error
-		serverSidecarService, _, err := libservice.CreateAndRegisterStaticServerAndSidecar(clientNode)
+		// Create a service and proxy instance
+		serviceOpts := libservice.ServiceOpts{
+			Name: libservice.StaticServerServiceName,
+			ID:   "static-server",
+			Meta: map[string]string{"version": ""},
+		}
+		serverSidecarService, _, err := libservice.CreateAndRegisterStaticServerAndSidecar(clientNode, &serviceOpts)
 		require.NoError(t, err)
 
-		libassert.CatalogServiceExists(t, acceptingClient, "static-server")
+		libassert.CatalogServiceExists(t, acceptingClient, libservice.StaticServerServiceName)
 		libassert.CatalogServiceExists(t, acceptingClient, "static-server-sidecar-proxy")
 
 		require.NoError(t, serverSidecarService.Export("default", AcceptingPeerName, acceptingClient))
