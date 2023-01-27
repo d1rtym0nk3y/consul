@@ -1319,7 +1319,7 @@ func TestCanRetry(t *testing.T) {
 		{
 			name:     "ErrRetryLater",
 			err:      fmt.Errorf("some wrapping: %w", rate.ErrRetryLater),
-			expected: true,
+			expected: false,
 		},
 		{
 			name:     "EOF on read request",

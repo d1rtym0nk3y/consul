@@ -586,7 +586,6 @@ func canRetry(info structs.RPCInfo, err error, start time.Time, config *Config) 
 		// These rate limit errors are returned before the handler is called, so are
 		// safe to retry.
 		rate.ErrRetryElsewhere,
-		rate.ErrRetryLater,
 	}
 	for _, m := range retryableMessages {
 		if err != nil && strings.Contains(err.Error(), m.Error()) {
