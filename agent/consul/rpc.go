@@ -745,6 +745,10 @@ CHECK_LEADER:
 			return true, nil
 		}
 	}
+	// defer to caller to retry
+	if rpcErr != rate.ErrRetryElsewhere {
+		return true, rpcErr
+	}
 
 	if retry := canRetry(info, rpcErr, firstCheck, s.config); retry {
 		// Gate the request until there is a leader
