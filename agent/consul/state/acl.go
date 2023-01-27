@@ -456,8 +456,7 @@ func aclTokenSetTxn(tx WriteTxn, idx uint64, token *structs.ACLToken, opts ACLTo
 	}
 
 	// Check for an existing ACL
-	// DEPRECATED (ACL-Legacy-Compat) - transition to using accessor index instead of secret once v1 compat is removed
-	_, existing, err := aclTokenGetFromIndex(tx, token.SecretID, "id", nil)
+	_, existing, err := aclTokenGetFromIndex(tx, token.AccessorID, indexAccessor, nil)
 	if err != nil {
 		return fmt.Errorf("failed token lookup: %s", err)
 	}
@@ -554,7 +553,7 @@ func aclTokenSetTxn(tx WriteTxn, idx uint64, token *structs.ACLToken, opts ACLTo
 
 // ACLTokenGetBySecret is used to look up an existing ACL token by its SecretID.
 func (s *Store) ACLTokenGetBySecret(ws memdb.WatchSet, secret string, entMeta *acl.EnterpriseMeta) (uint64, *structs.ACLToken, error) {
-	return s.aclTokenGet(ws, secret, "id", entMeta)
+	return s.aclTokenGet(ws, secret, indexID, entMeta)
 }
 
 // ACLTokenGetByAccessor is used to look up an existing ACL token by its AccessorID.

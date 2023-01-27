@@ -98,10 +98,6 @@ func TestTokenWriter_Create_Validation(t *testing.T) {
 			fromLogin:     false,
 			errorContains: "AuthMethod field is disallowed outside of login",
 		},
-		"Type set": {
-			token:         structs.ACLToken{Type: "some-type"},
-			errorContains: "Type cannot be specified for this token",
-		},
 	}
 	for desc, tc := range testCases {
 		t.Run(desc, func(t *testing.T) {
