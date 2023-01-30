@@ -3,7 +3,7 @@ package l7trafficmanagement
 import (
 	"fmt"
 	"testing"
-	"time"
+	//"time"
 
 	"github.com/hashicorp/consul/api"
 	libassert "github.com/hashicorp/consul/test/integration/consul-container/libs/assert"
@@ -48,7 +48,7 @@ func TestTrafficManagement_SetupServerAndClientWithSubsets(t *testing.T) {
 		_, serverAdminPort := serverServiceV2.GetAdminAddr()
 		fmt.Println(port, adminPort, serverAdminPort)
 		libassert.AssertUpstreamEndpointStatus(t, adminPort, "v2.static-server.default", "HEALTHY", 1)
-		// libassert.HTTPServiceEchoes(t, "localhost", clientPort, "")
+		libassert.HTTPServiceEchoes(t, "localhost", port, "")
 
 		// // Upgrade cluster and begin service validation
 		// require.NoError(t, cluster.StandardUpgrade(t, context.Background(), tc.targetVersion))
@@ -67,7 +67,7 @@ func TestTrafficManagement_SetupServerAndClientWithSubsets(t *testing.T) {
 		// libassert.AssertEnvoyPresentsCertURI(t, adminPortV1, "static-server", 2)
 		// libassert.AssertEnvoyPresentsCertURI(t, adminPortV2, "static-server", 2)
 
-		time.Sleep(900 * time.Second)
+		// time.Sleep(900 * time.Second)
 
 		// TO-DO: validate traffic management
 	}

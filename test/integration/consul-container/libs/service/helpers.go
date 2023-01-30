@@ -64,7 +64,7 @@ func CreateAndRegisterStaticServerAndSidecar(node libcluster.Agent, serviceOpts 
 		_ = serverService.Terminate()
 	})
 
-	serverConnectProxy, err := NewConnectService(context.Background(), fmt.Sprintf("%s-sidecar", StaticServerServiceName), StaticServerServiceName, 8080, node) // bindPort not used
+	serverConnectProxy, err := NewConnectService(context.Background(), fmt.Sprintf("%s-sidecar", StaticServerServiceName), serviceOpts.ID, 8080, node) // bindPort not used
 	if err != nil {
 		return nil, nil, err
 	}
