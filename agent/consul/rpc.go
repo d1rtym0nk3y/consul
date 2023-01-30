@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"strings"
 	"sync/atomic"
@@ -556,8 +557,18 @@ func (c *limitedConn) Read(b []byte) (n int, err error) {
 	return c.lr.Read(b)
 }
 
+func getWaitTime(config *Config, retryCount int) time.Duration {
+	rpcHoldTimeoutInSeconds := config.RPCHoldTimeout.Seconds() // TODO: define default value on safe side?
+	initialBackoffInSeconds := math.Min(1, rpcHoldTimeoutInSeconds/structs.MaxRetries)
+	backoffMultiplierInSeconds := 2.0 // math.Min(math.Max(rpcHoldTimeout/structs.MaxRetries, 2), 2)
+
+	waitTimeInSeconds := math.Min(initialBackoffInSeconds*math.Pow(backoffMultiplierInSeconds, float64(retryCount-1)), rpcHoldTimeoutInSeconds)
+
+	return lib.RandomStagger(time.Duration(waitTimeInSeconds * float64(time.Second)))
+}
+
 // canRetry returns true if the request and error indicate that a retry is safe.
-func canRetry(info structs.RPCInfo, err error, start time.Time, config *Config) bool {
+func canRetry(info structs.RPCInfo, err error, start time.Time, config *Config, retryCount int) bool {
 	if info != nil {
 		timedOut, timeoutError := info.HasTimedOut(start, config.RPCHoldTimeout, config.MaxQueryTime, config.DefaultQueryTime)
 		if timeoutError != nil {
@@ -569,7 +580,7 @@ func canRetry(info structs.RPCInfo, err error, start time.Time, config *Config) 
 		}
 	}
 
-	if info == nil && time.Since(start) > config.RPCHoldTimeout {
+	if info == nil && time.Since(start) > config.RPCHoldTimeout && retryCount <= structs.MaxRetries {
 		// When not RPCInfo, timeout is only RPCHoldTimeout
 		return false
 	}
@@ -722,7 +733,9 @@ func (s *Server) canServeReadRequest(info structs.RPCInfo) bool {
 // See the comment for forwardRPC for more details.
 func (s *Server) forwardRequestToLeader(info structs.RPCInfo, forwardToLeader func(leader *metadata.Server) error) (handled bool, err error) {
 	firstCheck := time.Now()
+	retryCount := 0
 CHECK_LEADER:
+	retryCount++
 	// Fail fast if we are in the process of leaving
 	select {
 	case <-s.leaveCh:
@@ -750,9 +763,12 @@ CHECK_LEADER:
 		return true, rpcErr
 	}
 
-	if retry := canRetry(info, rpcErr, firstCheck, s.config); retry {
+	if retry := canRetry(info, rpcErr, firstCheck, s.config, retryCount); retry {
 		// Gate the request until there is a leader
-		jitter := lib.RandomStagger(s.config.RPCHoldTimeout / structs.JitterFraction)
+		//jitter := lib.RandomStagger(s.config.RPCHoldTimeout / structs.JitterFraction)
+
+		// TODO: change the time interval calculator here
+		jitter := getWaitTime(s.config, retryCount)
 		select {
 		case <-time.After(jitter):
 			goto CHECK_LEADER

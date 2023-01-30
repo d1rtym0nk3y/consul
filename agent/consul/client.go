@@ -271,6 +271,7 @@ func (c *Client) RPC(ctx context.Context, method string, args interface{}, reply
 	// starting the timer here we won't potentially double up the delay.
 	// TODO (slackpad) Plumb a deadline here with a context.
 	firstCheck := time.Now()
+	retryCount := 0
 
 TRY:
 	manager, server := c.router.FindLANRoute()
@@ -296,7 +297,7 @@ TRY:
 
 	// Use the zero value for RPCInfo if the request doesn't implement RPCInfo
 	info, _ := args.(structs.RPCInfo)
-	if retry := canRetry(info, rpcErr, firstCheck, c.config); !retry {
+	if retry := canRetry(info, rpcErr, firstCheck, c.config, retryCount); !retry {
 		c.logger.Error("RPC failed to server",
 			"method", method,
 			"server", server.Addr,
