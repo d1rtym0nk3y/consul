@@ -112,7 +112,7 @@ type serviceLookup struct {
 	MaxRecursionLevel int
 	Connect           bool
 	Ingress           bool
-	acl.EnterpriseMeta
+	EnterpriseMeta    acl.EnterpriseMetadata
 }
 
 type nodeLookup struct {
@@ -121,7 +121,7 @@ type nodeLookup struct {
 	Node              string
 	Tag               string
 	MaxRecursionLevel int
-	acl.EnterpriseMeta
+	EnterpriseMeta    acl.EnterpriseMetadata
 }
 
 // DNSServer is used to wrap an Agent and expose various
@@ -141,19 +141,19 @@ type DNSServer struct {
 	// the recursor handler is only enabled if recursors are configured. This flag is used during config hot-reloading
 	recursorEnabled uint32
 
-	defaultEnterpriseMeta acl.EnterpriseMeta
+	defaultEnterpriseMeta acl.EnterpriseMetadata
 }
 
 func NewDNSServer(a *Agent) (*DNSServer, error) {
 	// Make sure domains are FQDN, make them case insensitive for ServeMux
-	domain := dns.Fqdn(strings.ToLower(a.config.DNSDomain))
+	domain := dns.Fqdn(strings.ToLower(a.config.DNSDomaing))
 	altDomain := dns.Fqdn(strings.ToLower(a.config.DNSAltDomain))
 	srv := &DNSServer{
 		agent:                 a,
 		domain:                domain,
 		altDomain:             altDomain,
 		logger:                a.logger.Named(logging.DNS),
-		defaultEnterpriseMeta: *a.AgentEnterpriseMeta(),
+		defaultEnterpriseMeta: a.AgentEnterpriseMeta(),
 		mux:                   dns.NewServeMux(),
 	}
 	cfg, err := GetDNSConfig(a.config)
@@ -359,7 +359,7 @@ func serviceNodeCanonicalDNSName(sn *structs.ServiceNode, domain string) string 
 	return serviceCanonicalDNSName(sn.ServiceName, "service", sn.Datacenter, domain, &sn.EnterpriseMeta)
 }
 
-func serviceIngressDNSName(service, datacenter, domain string, entMeta *acl.EnterpriseMeta) string {
+func serviceIngressDNSName(service, datacenter, domain string, entMeta acl.EnterpriseMetadata) string {
 	return serviceCanonicalDNSName(service, "ingress", datacenter, domain, entMeta)
 }
 
@@ -428,7 +428,7 @@ func (d *DNSServer) handlePtr(resp dns.ResponseWriter, req *dns.Msg) {
 				// need to populate that field for creating the node FQDN.
 				// PeerName: n.PeerName,
 				Datacenter:     n.Datacenter,
-				EnterpriseMeta: *n.GetEnterpriseMeta(),
+				EnterpriseMeta: n.GetEnterpriseMeta(),
 			}
 			arpa, _ := dns.ReverseAddr(n.Address)
 			if arpa == qName {
@@ -453,7 +453,7 @@ func (d *DNSServer) handlePtr(resp dns.ResponseWriter, req *dns.Msg) {
 				AllowStale: cfg.AllowStale,
 			},
 			ServiceAddress: serviceAddress,
-			EnterpriseMeta: *d.defaultEnterpriseMeta.WithWildcardNamespace(),
+			EnterpriseMeta: d.defaultEnterpriseMeta.WithWildcardNamespace(),
 		}
 
 		var sout structs.IndexedServiceNodes
@@ -706,7 +706,7 @@ type queryLocality struct {
 	// not be shared between datacenters. In all other cases, it should be considered a DC.
 	peerOrDatacenter string
 
-	acl.EnterpriseMeta
+	EnterpriseMeta acl.EnterpriseMetadata
 }
 
 func (l queryLocality) effectiveDatacenter(defaultDC string) string {

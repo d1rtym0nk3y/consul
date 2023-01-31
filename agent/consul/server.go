@@ -724,7 +724,7 @@ func NewServer(config *Config, flat Deps, externalGRPCServer *grpc.Server, incom
 			return s.ForwardGRPC(s.grpcConnPool, info, fn)
 		},
 		InPrimaryDatacenter: s.InPrimaryDatacenter(),
-		LoadAuthMethod: func(methodName string, entMeta *acl.EnterpriseMeta) (*structs.ACLAuthMethod, aclgrpc.Validator, error) {
+		LoadAuthMethod: func(methodName string, entMeta acl.EnterpriseMetadata) (*structs.ACLAuthMethod, aclgrpc.Validator, error) {
 			return s.loadAuthMethod(methodName, entMeta)
 		},
 		LocalTokensEnabled:        s.LocalTokensEnabled,
@@ -1433,7 +1433,7 @@ func (s *Server) GetPeeringBackend() peering.Backend {
 }
 
 // RemoveFailedNode is used to remove a failed node from the cluster.
-func (s *Server) RemoveFailedNode(node string, prune bool, entMeta *acl.EnterpriseMeta) error {
+func (s *Server) RemoveFailedNode(node string, prune bool, entMeta acl.EnterpriseMetadata) error {
 	var removeFn func(*serf.Serf, string) error
 	if prune {
 		removeFn = (*serf.Serf).RemoveFailedNodePrune
@@ -1453,7 +1453,7 @@ func (s *Server) RemoveFailedNode(node string, prune bool, entMeta *acl.Enterpri
 }
 
 // RemoveFailedNodeWAN is used to remove a failed node from the WAN cluster.
-func (s *Server) RemoveFailedNodeWAN(wanNode string, prune bool, entMeta *acl.EnterpriseMeta) error {
+func (s *Server) RemoveFailedNodeWAN(wanNode string, prune bool, entMeta acl.EnterpriseMetadata) error {
 	var removeFn func(*serf.Serf, string) error
 	if prune {
 		removeFn = (*serf.Serf).RemoveFailedNodePrune
@@ -1486,7 +1486,7 @@ func (s *Server) KeyManagerWAN() *serf.KeyManager {
 	return s.serfWAN.KeyManager()
 }
 
-func (s *Server) AgentEnterpriseMeta() *acl.EnterpriseMeta {
+func (s *Server) AgentEnterpriseMeta() acl.EnterpriseMetadata {
 	return s.config.AgentEnterpriseMeta()
 }
 

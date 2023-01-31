@@ -6,8 +6,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hashicorp/consul/command/operator/raft/transferleader"
-
 	"github.com/hashicorp/consul/command/acl"
 	aclagent "github.com/hashicorp/consul/command/acl/agenttokens"
 	aclam "github.com/hashicorp/consul/command/acl/authmethod"
@@ -146,7 +144,6 @@ func (c ConsulCommandFactory) RegisteredCommands(ui cli.Ui) map[string]mcli.Comm
 		Entry{"acl policy read", func(ui cli.Ui) (cli.Command, error) { return aclpread.New(ui), nil }},
 		Entry{"acl policy update", func(ui cli.Ui) (cli.Command, error) { return aclpupdate.New(ui), nil }},
 		Entry{"acl policy delete", func(ui cli.Ui) (cli.Command, error) { return aclpdelete.New(ui), nil }},
-		Entry{"acl translate-rules", func(ui cli.Ui) (cli.Command, error) { return aclrules.New(ui), nil }},
 		Entry{"acl set-agent-token", func(ui cli.Ui) (cli.Command, error) { return aclagent.New(ui), nil }},
 		Entry{"acl token", func(cli.Ui) (cli.Command, error) { return acltoken.New(), nil }},
 		Entry{"acl token create", func(ui cli.Ui) (cli.Command, error) { return acltcreate.New(ui), nil }},

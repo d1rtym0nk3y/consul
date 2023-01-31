@@ -73,11 +73,11 @@ func (m *EnterpriseMeta) InDefaultNamespace() bool {
 	return true
 }
 
-func (m *EnterpriseMeta) Merge(_ *EnterpriseMeta) {
+func (m *EnterpriseMeta) Merge(_ EnterpriseMetadata) {
 	// do nothing
 }
 
-func (m *EnterpriseMeta) MergeNoWildcard(_ *EnterpriseMeta) {
+func (m *EnterpriseMeta) MergeNoWildcard(_ EnterpriseMetadata) {
 	// do nothing
 }
 
@@ -85,19 +85,19 @@ func (_ *EnterpriseMeta) Normalize()          {}
 func (_ *EnterpriseMeta) NormalizePartition() {}
 func (_ *EnterpriseMeta) NormalizeNamespace() {}
 
-func (m *EnterpriseMeta) Matches(_ *EnterpriseMeta) bool {
+func (m *EnterpriseMeta) Matches(_ EnterpriseMetadata) bool {
 	return true
 }
 
-func (m *EnterpriseMeta) IsSame(_ *EnterpriseMeta) bool {
+func (m *EnterpriseMeta) IsSame(_ EnterpriseMetadata) bool {
 	return true
 }
 
-func (m *EnterpriseMeta) LessThan(_ *EnterpriseMeta) bool {
+func (m *EnterpriseMeta) LessThan(_ EnterpriseMetadata) bool {
 	return false
 }
 
-func (m *EnterpriseMeta) WithWildcardNamespace() *EnterpriseMeta {
+func (m *EnterpriseMeta) WithWildcardNamespace() EnterpriseMetadata {
 	return &emptyEnterpriseMeta
 }
 

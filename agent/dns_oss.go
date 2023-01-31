@@ -53,7 +53,7 @@ func (d *DNSServer) parseLocality(labels []string, cfg *dnsConfig) (queryLocalit
 	return queryLocality{}, false
 }
 
-func serviceCanonicalDNSName(name, kind, datacenter, domain string, _ *acl.EnterpriseMeta) string {
+func serviceCanonicalDNSName(name, kind, datacenter, domain string, _ acl.EnterpriseMetadata) string {
 	return fmt.Sprintf("%s.%s.%s.%s", name, kind, datacenter, domain)
 }
 

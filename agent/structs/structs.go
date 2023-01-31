@@ -734,7 +734,7 @@ type ServiceSpecificRequest struct {
 	// especially when the service might not be written into the catalog that way.
 	MergeCentralConfig bool
 
-	acl.EnterpriseMeta `hcl:",squash" mapstructure:",squash"`
+	acl.EnterpriseMetadata `hcl:",squash" mapstructure:",squash"`
 	QueryOptions
 }
 
@@ -1041,7 +1041,7 @@ type ServiceNode struct {
 	// If not empty, PeerName represents the peer that this ServiceNode was imported from.
 	PeerName string `json:",omitempty"`
 
-	acl.EnterpriseMeta `hcl:",squash" mapstructure:",squash" bexpr:"-"`
+	EnterpriseMeta acl.EnterpriseMetadata `hcl:",squash" mapstructure:",squash" bexpr:"-"`
 
 	RaftIndex `bexpr:"-"`
 }
