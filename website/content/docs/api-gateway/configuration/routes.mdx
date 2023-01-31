@@ -155,13 +155,13 @@ The following example creates a route named `example-route` in namespace `gatewa
     namespace: service-namespace
   spec:
     from:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      namespace: gateway-namespace
-      to:
-        - group: ""
-          kind: Service
-          name: echo
+      - group: gateway.networking.k8s.io
+        kind: HTTPRoute
+        namespace: gateway-namespace
+    to:
+      - group: ""
+        kind: Service
+        name: echo
   ```
 
 </CodeBlockConfig>
